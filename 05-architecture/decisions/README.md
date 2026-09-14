@@ -20,6 +20,7 @@ ADRs document important architectural decisions. Each file = one decision.
 
 | # | Title | Status | Date |
 |---|-------|--------|------|
-| None yet | — | — | — |
+| ADR-001 | Documentation Language | Accepted | 2026-09-11 |
+| ADR-002 | Real-Time Geolocation and Relational Persistence Strategy | Accepted | 2026-09-11 |
 
 > Add rows here as you create ADRs in `records/`
