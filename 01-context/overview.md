@@ -1,11 +1,5 @@
 # System Overview
 
-> **Instructions:** Replace this content with your project's description.
-> This is the first page someone new reads. They must be able to understand the system in 5 minutes.
-> Remove these instructions when the document is complete.
-
----
-
 ## What is FixGo?
 
 FixGo is a mobile roadside assistance platform that instantly connects stranded drivers with nearby verified mechanics for on-site vehicle repairs. The system bridges the gap between drivers needing immediate mechanical diagnostics and local workshops ready to dispatch help, minimizing roadside wait times through automated location-based matching.
@@ -14,7 +8,7 @@ FixGo is a mobile roadside assistance platform that instantly connects stranded 
 
 **Before the system:** Stranded drivers had to manually search the internet or place random phone calls to find available workshops, often waiting hours for traditional towing services with zero visibility on cost, availability, or arrival time. Independent mechanics lost revenue due to a lack of digital dispatch channels.
 
-**With the system:** [How the process improves. What value it delivers.]
+**With the system:** Drivers submit a request and get matched with a verified nearby mechanic within minutes, with live tracking of the mechanic's location, status, and estimated arrival time. Mechanics receive dispatch notifications directly on their device and gain a digital channel to reach drivers who previously had no way of finding them.
 
 ## Main users
 
@@ -31,7 +25,7 @@ FixGo is a mobile roadside assistance platform that instantly connects stranded 
 | **Frontend** | Flutter / Android Mobile | Provides cross-platform native performance and native access to mobile GPS geolocation services. |
 | **Backend** | Java (Maven / Spring Boot) | Delivers robust, enterprise-grade architecture for handling business rules, dispatch logic, and API endpoints. |
 | **Database** | Firebase Realtime Database & SQL | Enables instant bidirectional data sync for tracking and matchmaking, backed by relational data persistence. |
-| **Message broker** | Firebase Cloud Messaging  / Kafka | Ensures instantaneous push notifications and event-driven updates between drivers and mechanics. |
+| **Message broker** | Firebase Cloud Messaging (FCM) | Ensures instantaneous push notifications between drivers and mechanics as dispatch-service triggers alerts. |
 | **Infrastructure** | Cloud-based hosting with AES-256 | Ensures continuous service availability, strict p95 latency control, and robust data encryption at rest. |
 
 ## Current status
