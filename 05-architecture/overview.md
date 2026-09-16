@@ -11,7 +11,7 @@
 **Style:** Microservices and Event-Driven 
 
 **Justification:** FixGo requires sub-3-second latency for emergency dispatch, independent horizontal scaling for tracking vs user authentication, and high availability during traffic spikes.
-**Reference ADR:** `ADR-002-data-strategy.md`decisions/_template-adr.md/
+**Reference ADR:** `05-architecture/decisions/records/ADR-002-data-strategy.md`
 
 ---
 
@@ -20,32 +20,34 @@
 > Shows how the system fits in the world. External actors and external systems.
 
 ```
-┌─────────────────────────────────────────────────────────────────────┐
-│                        System FixGo Platform                        │
-│                                                                     │
-│  ┌─────────────┐    ┌────────────────┐    ┌──────────────────────┐  │
-│  │ auth-service│    │dispatch-service│    │ Firebase RTDB / FCM  │  │
-│  │             │    │                │    │                      │  │
-│  │ Port: 8081  │    │ Port: 8082     │    │ Cloud Services       │  │
-│  └──────┬──────┘    └───────┬────────┘    └──────────┬───────────┘  │
-│         │                   │                        │              │
-│         └───────────────────┴────────────────────────┘              │
-│                             │ Internal Docker Network                │
-└─────────────────────────────│───────────────────────────────────────┘
-                              │
-                   ┌──────────┴──────────┐
-                   │                     │
-          ┌────────▼──────┐    ┌─────────▼──────┐
-          │ API Gateway   │    │  SQL DB Engine │
-          │ (Nginx : 443) │    │   (AES-256)    │
-          └────────┬──────┘    └────────────────┘
-                   │
-          ┌────────▼──────────────┐
-          │    External clients   │
-          │ (Driver & Mechanic App│
-          │   via Flutter/Android)│
-          └───────────────────────┘
+┌───────────────────────────────────────────────────────────────────────────────────────┐
+│                                System FixGo Platform                                   │
+│                                                                                         │
+│  ┌─────────────┐  ┌──────────────────┐  ┌─────────────────────┐  ┌──────────────────┐  │
+│  │ auth-service│  │ service-request  │  │ geolocation-service │  │ service-execution │  │
+│  │             │  │                  │  │                     │  │                   │  │
+│  │ Port: 8081  │  │ Port: 8082       │  │ Port: 8083          │  │ Port: 8084        │  │
+│  └──────┬──────┘  └────────┬─────────┘  └──────────┬──────────┘  └─────────┬─────────┘  │
+│         │                  │                       │                       │            │
+│         └──────────────────┴───────────┬───────────┴───────────────────────┘            │
+│                                         │ Internal Docker Network                        │
+└─────────────────────────────────────────│───────────────────────────────────────────────┘
+                                          │
+                        ┌─────────────────┼─────────────────┐
+                        │                                   │
+               ┌────────▼──────┐              ┌─────────────▼────────────┐
+               │ API Gateway   │              │ Firebase RTDB / FCM       │
+               │ (Nginx : 443) │              │ (live GPS + notifications)│
+               └────────┬──────┘              └───────────────────────────┘
+                        │
+               ┌────────▼──────────────┐
+               │    External clients   │
+               │ (Driver & Mechanic App│
+               │   via Flutter/Android)│
+               └───────────────────────┘
 ```
+
+> `auth-service` and `service-request` persist to the relational MySQL engine (AES-256 at rest); `geolocation-service` uses Firebase Realtime Database as an ephemeral sync layer, per `06-data/models.md`.
 
 ---
 
@@ -58,18 +60,25 @@ graph TB
     subgraph "System FixGo Platform"
         GW[API Gateway<br/>Nginx :443/:80]
         AS[auth-service<br/>Java 17 Spring Boot :8081]
-        DS[dispatch-service<br/>Java 17 Spring Boot :8082]
+        SR[service-request<br/>Java 17 Spring Boot :8082]
+        GEO[geolocation-service<br/>Java 17 Spring Boot :8083]
+        SE[service-execution<br/>Java 17 Spring Boot :8084]
         FCM[(Firebase Cloud Messaging<br/>Push Engine)]
         RTDB[(Firebase Realtime Database<br/>Live GPS Telemetry)]
-        SQL[(Relational SQL DB<br/>AES-256 Encrypted)]
+        SQL[(MySQL — AES-256 Encrypted)]
     end
 
     MOB[Driver & Mechanic App<br/>Flutter / Mobile] -->|HTTPS / WSS| GW
     GW -->|Internal REST| AS
-    GW -->|Internal REST / WSS| DS
+    GW -->|Internal REST| SR
+    GW -->|Internal REST / WSS| GEO
+    GW -->|Internal REST| SE
     AS -->|JPA / JDBC| SQL
-    DS -->|SDK Sync| RTDB
-    DS -->|Alert Trigger| FCM
+    SR -->|JPA / JDBC| SQL
+    SR -.->|ServiceRequested event| SE
+    SE -.->|ServiceCompleted event| AS
+    GEO -->|SDK Sync| RTDB
+    GEO -->|Alert Trigger| FCM
     FCM -.->|Push Notifications| MOB
 ```
 
@@ -103,8 +112,10 @@ graph TB
 | # | Service | Responsibility | Port | DB | Communication type |
 |---|---------|---------------|------|-----|-------------------|
 | 1 | `api-gateway` | Edge routing, TLS 1.3 termination, rate limiting, and JWT pass-through | 443 / 80 | N/A | HTTP Reverse Proxy |
-| 2 | `auth-service` | User registration, credential validation, RBAC enforcement, and profile records | 8081 | Relational SQL (AES-256) | REST + Events |
-| 3 | `dispatch-service` | Emergency ticket creation, sub-3s mechanic matchmaking, and live GPS coordination | 8082 | Firebase RTDB | REST + Real-time Sync |
+| 2 | `auth-service` | User, Driver, Mechanic, and Vehicle registration; credential validation; RBAC enforcement | 8081 | MySQL (AES-256) | REST + Events |
+| 3 | `service-request` | Emergency ticket (ServiceRequest) creation, lifecycle, and status management | 8082 | MySQL (AES-256) | REST + Events |
+| 4 | `geolocation-service` | Sub-3s mechanic matchmaking and live GPS coordination (15 m accuracy) | 8083 | Firebase RTDB | REST + Real-time Sync |
+| 5 | `service-execution` | On-site diagnostic capture and service closure (`ServiceCompleted`) | 8084 | MySQL (AES-256) | REST + Events |
 
 > Full detail per service in `09-microservices/service-catalog.md`
 
@@ -189,7 +200,7 @@ Transversal concerns that apply to ALL services:
 ## Key correlations
 
 - Domain bounded contexts → `02-domain/domain-map.md`
-- Specific decision ADRs → `05-architecture/decisions/_template-adr.md/`
+- Specific decision ADRs → `05-architecture/decisions/records/`
 - Hexagonal architecture per service → `05-architecture/hexagonal-architecture.md`
 - Applied patterns → `05-architecture/pattern-guide.md`
 - Per-service detail → `09-microservices/service-catalog.md`
