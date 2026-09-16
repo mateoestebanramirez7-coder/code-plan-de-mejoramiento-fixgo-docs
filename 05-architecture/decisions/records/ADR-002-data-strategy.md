@@ -52,7 +52,7 @@ Firebase Realtime Database handles high-frequency location streams without relat
 - Cloud dependency on Google Firebase availability for live tracking features.
 
 **Impact on the system:**
-- Affected services: `dispatch-service`, `auth-service`, mobile client application.
+- Affected services: `geolocation-service`, `service-request`, `auth-service`, mobile client application.
 - Documents that must be updated: `05-architecture/overview.md`, `05-architecture/deployment.md`, `06-data/models.md`.
 
 ---
