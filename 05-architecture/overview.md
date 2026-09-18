@@ -184,7 +184,7 @@ Transversal concerns that apply to ALL services:
 | AT-001 | Standalone mock driver generator required to test concurrent 3-second SLA matchmaking locally | Medium | P2 | Sprint 2 |
 | AT-002 | Direct Firebase SDK integration in dispatch container to be abstracted behind a modular secondary adapter interface | Low | P3 | Sprint 3 |
 
-> See also: `15-project-control/technical-backlog.md`
+> See also: `15-project-control/technical-backlog.md` (pending, section 15 not yet delivered)
 
 ---
 
