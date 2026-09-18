@@ -8,32 +8,30 @@
 
 ## Frontend route structure
 
-> **Instruction:** Fill this tree with your application's real routes.
-> Use the `[method] /route` format for API endpoints where applicable.
-
 ```
 /                           → Home / landing page
 ├── /auth
 │   ├── /login              → Authentication form
-│   ├── /register           → New user registration
+│   ├── /register           → New user registration (Driver or Mechanic)
 │   └── /forgot-password    → Password recovery
 │
-├── /dashboard              → Main panel (authenticated)
+├── /dashboard               → Main panel (authenticated)
 │   ├── /overview           → Summary and key metrics
-│   └── /notifications      → Notification center
+│   └── /notifications      → Notification center (dispatch alerts)
 │
-├── /[resource-a]           → [Resource A] list
-│   ├── /new                → Creation form
+├── /requests                → Driver: service request list
+│   ├── /new                → New breakdown request (GPS + failure type)
 │   └── /:id
-│       ├── /               → Resource detail
-│       └── /edit           → Edit form
+│       ├── /               → Request detail with live mechanic tracking
+│       └── /cancel          → Cancel active request
 │
-├── /[resource-b]           → [Resource B] list
-│   └── /:id                → Detail
+├── /dispatch                 → Mechanic: incoming request queue
+│   └── /:id                → Accept/reject a dispatched request, update status
 │
 ├── /admin                  → Administration panel (role: ADMIN)
-│   ├── /users              → User management
-│   └── /settings           → System configuration
+│   ├── /verifications      → Mechanic credential verification queue
+│   ├── /sla-monitoring     → SLA metrics console (3-second matching benchmark)
+│   └── /users              → Driver/Mechanic account management
 │
 └── /profile                → Authenticated user's profile
 ```
@@ -47,32 +45,53 @@
 | Home | `/` | `HomePage` | Public | — |
 | Login | `/auth/login` | `LoginPage` | Public | auth-service |
 | Register | `/auth/register` | `RegisterPage` | Public | auth-service |
-| Dashboard | `/dashboard` | `DashboardPage` | USER | [service] |
-| [Resource A] list | `/[resource-a]` | `[ResourceA]ListPage` | USER | [service] |
-| [Resource A] detail | `/[resource-a]/:id` | `[ResourceA]DetailPage` | USER | [service] |
-| Create [Resource A] | `/[resource-a]/new` | `[ResourceA]FormPage` | USER | [service] |
-| Admin panel | `/admin` | `AdminDashboard` | ADMIN | auth-service |
+| Dashboard | `/dashboard` | `DashboardPage` | Driver / Mechanic | dispatch-service |
+| Request list | `/requests` | `RequestListPage` | Driver | dispatch-service |
+| New request | `/requests/new` | `RequestFormPage` | Driver | dispatch-service |
+| Request detail (live tracking) | `/requests/:id` | `RequestDetailPage` | Driver | dispatch-service, tracking-service |
+| Dispatch queue | `/dispatch` | `DispatchQueuePage` | Mechanic | dispatch-service |
+| Dispatch detail | `/dispatch/:id` | `DispatchDetailPage` | Mechanic | dispatch-service |
+| Verification queue | `/admin/verifications` | `VerificationQueuePage` | Administrator | auth-service |
+| SLA monitoring console | `/admin/sla-monitoring` | `SlaMonitoringPage` | Administrator | dispatch-service |
+| Admin panel | `/admin` | `AdminDashboard` | Administrator | auth-service |
 
 ---
 
 ## Main user flows
 
-### Flow 1 — [Name of main flow]
+### Flow 1 — Roadside assistance request (Driver)
 
 ```
-[Start screen]
+Dashboard (/dashboard)
     │
-    ▼ [User action]
-[Screen 2]
+    ▼ Driver taps "Request assistance"
+New request (/requests/new)
     │
-    ├── [Successful case] ──► [OK result screen]
+    ├── GPS + failure type submitted ──► Request detail (/requests/:id)
+    │                                     shows live-tracked matched mechanic
     │
-    └── [Error case] ────► [Error screen / feedback]
+    └── No mechanic available in range ► Error screen: "No mechanics nearby,
+                                          try again in a few minutes"
 ```
 
-**Related HUs:** HU-[service]-001, HU-[service]-002
+**Related HUs:** HU-DISPATCH-001, HU-DISPATCH-002
 
-### Flow 2 — Authentication
+### Flow 2 — Dispatch acceptance (Mechanic)
+
+```
+Dispatch queue (/dispatch)
+    │
+    ▼ Mechanic taps an incoming request
+Dispatch detail (/dispatch/:id)
+    │
+    ├── Accept ──► Status updates to "En route", driver sees live tracking
+    │
+    └── Reject ─► Request returns to matching pool for next nearest mechanic
+```
+
+**Related HUs:** HU-DISPATCH-003, HU-DISPATCH-004
+
+### Flow 3 — Authentication
 
 ```
 Landing (/)
@@ -93,10 +112,10 @@ Login (/auth/login)
 
 | Rule | Description |
 |------|-------------|
-| Authentication | Routes under `/dashboard`, `/[resource]`, `/admin` redirect to `/auth/login` if no session |
-| Authorization | Routes under `/admin` redirect to `/dashboard` if the user does not have ADMIN role |
+| Authentication | Routes under `/dashboard`, `/requests`, `/dispatch`, `/admin` redirect to `/auth/login` if no session |
+| Authorization | Routes under `/dispatch` require Mechanic role; routes under `/admin` require Administrator role — otherwise redirect to `/dashboard` |
 | 404 | Undefined routes show the 404 screen with a link to dashboard |
-| Confirmation | Destructive actions (delete, cancel) show a confirmation dialog before executing |
+| Confirmation | Cancelling an active request or rejecting a dispatch shows a confirmation dialog before executing |
 
 ---
 
