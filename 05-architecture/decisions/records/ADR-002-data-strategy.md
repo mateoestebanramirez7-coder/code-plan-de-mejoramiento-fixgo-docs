@@ -53,7 +53,7 @@ Firebase Realtime Database handles high-frequency location streams without relat
 
 **Impact on the system:**
 - Affected services: `geolocation-service`, `service-request`, `auth-service`, mobile client application.
-- Documents that must be updated: `05-architecture/overview.md`, `05-architecture/deployment.md`, `06-data/models.md`.
+- Documents that must be updated: `05-architecture/overview.md`, `05-architecture/deployment.md` (pending, section 05 continuation), `06-data/models.md`.
 
 ---
 
@@ -68,6 +68,6 @@ Firebase Realtime Database handles high-frequency location streams without relat
 
 ## References
 
-- Deployment Infrastructure Guide → `05-architecture/deployment.md`
+- Deployment Infrastructure Guide → `05-architecture/deployment.md` (pending, section 05 continuation)
 - System Architecture Overview → `05-architecture/overview.md`
 - Related to: ADR-001 (Documentation Language), ADR-002 (Authentication Strategy)

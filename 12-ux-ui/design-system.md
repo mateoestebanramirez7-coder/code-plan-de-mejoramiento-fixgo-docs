@@ -200,5 +200,5 @@ Tokens are the design system's variables. Changing a token changes the entire sy
 ## Correlations
 
 - Navigation map → `12-ux-ui/navigation-map.md`
-- Wireframes → `12-ux-ui/wireframes.md`
+- Wireframes → `12-ux-ui/wireframes.md` (pending — low-fidelity screens not yet drafted)
 - UX non-functional requirements → `04-requirements/non-functional.md`

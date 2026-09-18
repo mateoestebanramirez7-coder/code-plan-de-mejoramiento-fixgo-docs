@@ -9,7 +9,7 @@
 - [ ] Code implements all acceptance criteria of the user story
 - [ ] Code was reviewed and approved by at least 1 team member (PR review)
 - [ ] Code follows project standards (linting and formatting pass in CI)
-- [ ] No technical debt introduced without registering it in `15-project-control/technical-backlog.md`
+- [ ] No technical debt introduced without registering it in `15-project-control/technical-backlog.md` (pending, section 15 not yet delivered)
 
 ### Tests
 - [ ] Unit tests written for new business logic
